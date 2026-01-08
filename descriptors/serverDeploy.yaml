@@ -81,6 +81,14 @@ spec:
             - "--insecure"
             - "--fleet-api-address=0.0.0.0:9092"
             - "--control-api-address=0.0.0.0:9093"
+          #資源配置
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
           ports:
             - name: fleet
               containerPort: 9092
