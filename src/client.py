@@ -345,7 +345,7 @@ class DataCache:
             self.meta.exists(),
         ])
 
-    def is_valid(self, csv_path: str, config: dict) -> (bool, str):
+    def is_valid(self, csv_path: str, config: dict) -> tuple[bool, str]:
         # 檢查 cache 是否存在且 meta 匹配
         if not self._all_cache_files_exist():
             return False, "cache files missing"
