@@ -1,35 +1,92 @@
-from typing import List, Tuple
-
+# server.py
+from typing import List, Tuple, Dict
 import flwr as fl
 from flwr.common import Metrics
-import argparse
+from flwr.app import Context
+from flwr.server import ServerAppComponents, ServerConfig
+from flwr.serverapp import ServerApp
+from collections.abc import Mapping
+import numpy as np
+
+# return averaged
+def weighted_avg_all(metrics: List[Tuple[int, Metrics]]) -> Metrics:
+    """
+    metrics: List[(num_examples, {"loss":..., "accuracy":..., "f1":...})]
+    return: weighted average dict
+    """
+    totals: Dict[str, float] = {}
+    weights_sum = 0
+
+    if not metrics:
+        print("Warning: weighted_avg_all called with empty metrics list.")
+        return {}
+
+    for num_examples, m in metrics:
+        # 不要只判斷 dict，改用 Mapping（可吃 dict / OrderedDict / 其他 mapping）
+        if not isinstance(m, Mapping):
+            print(f"Warning: skipping malformed metric entry (metrics not mapping): ({num_examples}, {m})")
+            continue
+
+        #num_examples 允許 numpy int
+        try:
+            n = int(num_examples)
+        except Exception:
+            print(f"Warning: skipping malformed metric entry (num_examples not int-castable): ({num_examples}, {m})")
+            continue
+
+        if n <= 0:
+            continue
+
+        weights_sum += n
+
+        for k, v in m.items():
+            # 允許 numpy float
+            if isinstance(v, (int, float, np.number)):
+                totals[k] = totals.get(k, 0.0) + n * float(v)
+
+    if weights_sum == 0:
+        print("Warning: no examples reported by clients for metric aggregation (weights_sum == 0).")
+        return {}
+
+    return {k: tot / weights_sum for k, tot in totals.items()}
 
 
-# Define metric aggregation function
-def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # Multiply accuracy of each client by number of examples used
-    accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
-    examples = [num_examples for num_examples, _ in metrics]
+#ServerApp 用的 server_fn
+def server_fn(context: Context) -> ServerAppComponents:
+    """
+    建立並回傳 ServerAppComponents，給 Flower ServerApp 使用。
 
-    # Aggregate and return custom metric (weighted average)
-    return {"accuracy": sum(accuracies) / sum(examples)}
+    之後可以在 flwr run 時用 --run-config 傳參數，例如：
+      flwr run . k8s-local --run-config='{"num_rounds": 5, "num_clients": 2}'
+    """
+    run_cfg = context.run_config or {}
 
-#Parse inputs
-parser = argparse.ArgumentParser(description="Launches FL clients.")
-parser.add_argument('-clients',"--clients", type=int, default=2, help="Define the number of clients to be part of he FL process",)
-parser.add_argument('-min',"--min", type=int, default=2, help="Minimum number of available clients",)
-parser.add_argument('-rounds',"--rounds", type=int, default=5, help="Number of FL rounds",)
-args = vars(parser.parse_args())
-num_clients = args['clients']
-min_clients = args['min']
-rounds = args['rounds']
+    # 這幾個就是原本 argparse 的參數，現在從 run_config 讀，沒給就用預設值
+    num_clients = int(run_cfg.get("num_clients", 2))
+    min_available = int(run_cfg.get("min_available", 2))
+    num_rounds = int(run_cfg.get("num_rounds", 5))
 
-# Define strategy
-strategy = fl.server.strategy.FedAvg(evaluate_metrics_aggregation_fn=weighted_average, min_fit_clients = num_clients, min_available_clients=min_clients)
+    print(
+        f"[server_fn] num_clients={num_clients}, "
+        f"min_available={min_available}, num_rounds={num_rounds}"
+    )
 
-# Start Flower server
-fl.server.start_server(
-    server_address="0.0.0.0:8080",
-    config=fl.server.ServerConfig(num_rounds=rounds),
-    strategy=strategy,
-)
+    # FedAvg 策略（沿用原本 server.py 的設定）
+    strategy = fl.server.strategy.FedAvg(
+        fraction_fit=1.0,                  # 每輪抽樣比例（這裡全抽）
+        fraction_evaluate=1.0,             # 評估抽樣
+        min_fit_clients=num_clients,       # 每輪最少參與訓練的客戶端
+        min_evaluate_clients=num_clients,  # 每輪最少參與評估的客戶端
+        min_available_clients=min_available,  # 集群內最少可用客戶端
+        fit_metrics_aggregation_fn=weighted_avg_all,
+        evaluate_metrics_aggregation_fn=weighted_avg_all,
+    )
+
+    # ServerConfig：設定總共要跑幾輪
+    config = ServerConfig(num_rounds=num_rounds)
+
+    return ServerAppComponents(config=config, strategy=strategy)
+
+
+# 這個 app 會被 Flower 找到並啟動
+app = ServerApp(server_fn=server_fn)

@@ -1,3 +1,41 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: flower-client
+#   labels:
+#     app: flower-client
+# spec:
+#   replicas: 2
+#   strategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       maxUnavailable: 100%
+#   selector:
+#     matchLabels:
+#       app: flower-client
+#   template:
+#     metadata:
+#       labels:
+#         app: flower-client
+#     spec:
+#       affinity:
+#         # ⬇⬇⬇ This ensures pods will land on separate hosts
+#         podAntiAffinity:
+#           requiredDuringSchedulingIgnoredDuringExecution:
+#             - labelSelector:
+#                 matchExpressions: [{ key: app, operator: In, values: [flower-client] }]
+#               topologyKey: "kubernetes.io/hostname"
+#       containers:
+#       - name: kubeflower
+#         image: kubeflower:latest
+#         imagePullPolicy: IfNotPresent
+#         command: ["/bin/sh", "-c"]
+#         args: ["python ./src/client.py --server 'service-server' --port '30051'"]
+#         ports:
+#         - containerPort: 30051
+#       terminationGracePeriodSeconds: 1
+
+# Flower SuperNode
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +47,7 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 100%
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: flower-client
@@ -18,19 +56,44 @@ spec:
       labels:
         app: flower-client
     spec:
+      #  這段 affinity 原本的可以照留，讓 Pod 分散到不同 Node
       affinity:
-        # ⬇⬇⬇ This ensures pods will land on separate hosts
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
-                matchExpressions: [{ key: app, operator: In, values: [flower-client] }]
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: ["flower-client"]
               topologyKey: "kubernetes.io/hostname"
+
+      terminationGracePeriodSeconds: 5
+
       containers:
-      - name: kubeflower
-        image: kubeflower:latest
-        imagePullPolicy: IfNotPresent
-        command: ["/bin/sh", "-c"]
-        args: ["python ./src/client.py --server 'service-server' --port '30051'"]
-        ports:
-        - containerPort: 30051
-      terminationGracePeriodSeconds: 1
+        - name: kubeflower
+          image: kubeflower:latest
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+
+          command: ["flower-supernode"]
+          args:
+            - "--insecure"
+            - "--superlink=service-server:9092"
+          #          # GPU 資源需求
+          resources:
+            limits:
+              # nvidia.com/gpu: 1
+              memory: "8Gi"
+              cpu: "4"
+            requests:
+              # nvidia.com/gpu: 1
+              memory: "4Gi"
+              cpu: "2"
+
+          env:
+            - name: DATA_PATH
+              value: "/app/data"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name

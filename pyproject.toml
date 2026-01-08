@@ -1,0 +1,36 @@
+[project]
+name = "my-flower-superlink-app"
+version = "0.1.0"
+requires-python = ">=3.9"
+# 這裡可以加 dependencies，如果要用 pip install -e . 的話
+# dependencies = [
+#   "flwr>=1.20.0",
+#   "torch",
+#   "pandas",
+#   ...
+# ]
+
+[tool.flwr.app]
+# 新版 Flower 必填欄位
+publisher = "my-lab-or-name"
+
+# 告訴 Flower server / client App 在哪裡
+[tool.flwr.app.components]
+serverapp = "src.server:app"
+clientapp = "src.client:app"
+
+#在這裡放預設的 run_config，會變成 context.run_config
+#  server_fn 裡的 run_cfg = context.run_config 就會拿到這些值
+[tool.flwr.app.config]
+num_rounds = 5
+num_clients = 2
+min_available = 2
+
+[tool.flwr.federations]
+# 指定預設 federation 名稱
+default = "k8s-local"
+
+[tool.flwr.federations.k8s-local]
+# 在的 SuperLink Control API
+address = "127.0.0.1:9093"
+insecure = true
