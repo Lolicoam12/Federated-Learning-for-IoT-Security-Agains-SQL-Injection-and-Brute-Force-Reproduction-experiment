@@ -4,3 +4,6 @@ data/
 __pycache__/
 *.py[cod]
 *.tar
+/images/
+/.claude/
+/out/
