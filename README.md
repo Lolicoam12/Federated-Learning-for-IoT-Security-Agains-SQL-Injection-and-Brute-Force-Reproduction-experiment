@@ -2,6 +2,15 @@
 
 *** The extension of this work can be found in [KubeFlower-Operator](https://github.com/REASON-6G/kubeflower-operator/tree/main) ***
 
+# 要求
+Verify GPU works in WSL2
+check:
+'''
+nvidia-smi
+'''
+Minikube Setup
+Docker
+
 ## 專案概述
 KubeFlower 是一個基於 Kubernetes 的聯邦學習 (Federated Learning) 系統，結合：
 
@@ -53,3 +62,47 @@ minikubeFlower/
 |test_size|	0.2|	client.py:509|	測試集比例|
 |scaling|	"standard"|	client.py:491|	數值縮放方法|
 |encoding|	"onehot"|	client.py:492|	類別編碼方法|
+
+# 啟動流程
+設定視窗版的 Docker buildx
+'''
+minikube -p minikube docker-env --shell powershell | Invoke-Expression
+'''
+啟動minikube並配置硬體(須注意)
+'''
+minikube start --driver=docker --gpus=all --memory=16384 --cpus=8 --addons=ingress
+'''
+啟用GPU Plugin
+'''
+minikube addons enable nvidia-device-plugin
+'''
+驗證Node GPU
+'''
+kubectl describe node minikube | findstr /I nvidia
+'''
+另外開一個終端機視窗
+'''
+kubectl port-forward svc/service-server 9093:9093 9092:9092
+'''
+'''
+flwr run . k8s-local --stream
+'''
+Go to the folder that contains Kubeflower
+'''
+docker build -t kubeflower:latest .
+'''
+kubectl apply -f descriptors/copier.yaml
+kubectl apply -f descriptors/serverService.yaml
+kubectl apply -f descriptors/serverDeploy.yaml
+kubectl apply -f descriptors/clientDeploy.yaml
+kubectl get pods -owide
+
+查看日誌
+顯示flower-client的Pod名稱
+kubectl get pods -l app=flower-client
+kubectl logs -f pod/(flower-client-pod名稱)
+
+cd .\descriptors\
+kubectl delete deploy flower-client flower-server
+kubectl delete svc service-server
+kubectl delete pvc my-pvc
