@@ -705,7 +705,7 @@ def client_fn(context: Context) -> fl.client.Client:
                 is_binary=is_binary,
             )
 
-            # 👉 用 validation set 當作 fit metrics
+            #  用 validation set 當作 fit metrics
             val_loss, val_acc, val_f1 = test(net, valloader, is_binary)
 
             return (

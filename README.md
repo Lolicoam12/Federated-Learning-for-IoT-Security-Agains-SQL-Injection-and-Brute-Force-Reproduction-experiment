@@ -8,7 +8,7 @@ check:
 '''
 nvidia-smi
 '''
-Minikube Setup
+Minikube
 Docker
 
 ## 專案概述
