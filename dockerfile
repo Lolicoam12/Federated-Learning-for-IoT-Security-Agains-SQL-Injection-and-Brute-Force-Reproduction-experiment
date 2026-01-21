@@ -40,9 +40,9 @@ CMD ["/bin/sh", "-c", "while sleep 1000; do :; done"]
 
 #修改後重新建置映像檔
 # cd .\descriptors\
-# kubectl delete deploy flower-client flower-server --ignore-not-found
-# kubectl delete svc service-server --ignore-not-found
-# kubectl delete pvc my-pvc --ignore-not-found
+# kubectl delete deploy flower-client flower-server
+# kubectl delete svc service-server
+# kubectl delete pvc my-pvc
 # cd D:\DockerKubernetes\minikube_Use_FL\minikube_Use_FL_re\minikubeFlower
 # docker build -t kubeflower:latest .
 # kubectl apply -f descriptors/copier.yaml

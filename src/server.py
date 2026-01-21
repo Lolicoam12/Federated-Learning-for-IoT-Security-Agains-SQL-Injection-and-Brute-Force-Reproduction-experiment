@@ -65,12 +65,21 @@ def server_fn(context: Context) -> ServerAppComponents:
     num_clients = int(run_cfg.get("num_clients", 2))
     min_available = int(run_cfg.get("min_available", 2))
     num_rounds = int(run_cfg.get("num_rounds", 5))
-
+    local_epochs = int(run_cfg.get("local_epochs", run_cfg.get("epochs", 1)))
     print(
         f"[server_fn] num_clients={num_clients}, "
         f"min_available={min_available}, num_rounds={num_rounds}"
+        f"local_epochs={local_epochs}"
     )
 
+    # 每輪訓練的 config
+    def fit_config(server_round: int):
+        return {
+            "local_epochs": local_epochs,
+            "epochs": local_epochs,          # 兼容另一種 key
+            "current_round": server_round,
+        }
+    
     # FedAvg 策略（沿用原本 server.py 的設定）
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=1.0,                  # 每輪抽樣比例（這裡全抽）
@@ -80,6 +89,7 @@ def server_fn(context: Context) -> ServerAppComponents:
         min_available_clients=min_available,  # 集群內最少可用客戶端
         fit_metrics_aggregation_fn=weighted_avg_all,
         evaluate_metrics_aggregation_fn=weighted_avg_all,
+        on_fit_config_fn=fit_config,
     )
 
     # ServerConfig：設定總共要跑幾輪

@@ -19,6 +19,7 @@ Kubernetes/Minikube - 容器編排
 Docker - 容器化 (支援 NVIDIA CUDA GPU)
 PyTorch - 深度學習模型訓練
 Pandas/Scikit-learn - 資料預處理
+
 # 專案目錄結構
 
 minikubeFlower/
@@ -54,14 +55,14 @@ minikubeFlower/
 |num_rounds|	5|	pyproject.toml|	聯邦學習輪數|
 |num_clients|	2|	pyproject.toml|	預期 Client 數量|
 |min_available|	2|	pyproject.toml|	最少可用 Client|
-|local_epochs|	1|	client.py:697|	每輪本地訓練週期|
-|batch_size|	32|	client.py:546|	批次大小|
-|learning_rate|	0.001|	client.py:114|	Adam 學習率|
+|local_epochs|	1|	client.py|	每輪本地訓練週期|
+|batch_size|	32|	client.py|	批次大小|
+|learning_rate|	0.001|	client.py|	Adam 學習率|
 |input_dim|	110|	資料衍生|	輸入特徵維度|
-|hidden_layers|	[8, 8]|	client.py:683|	隱藏層維度|
-|test_size|	0.2|	client.py:509|	測試集比例|
-|scaling|	"standard"|	client.py:491|	數值縮放方法|
-|encoding|	"onehot"|	client.py:492|	類別編碼方法|
+|hidden_layers|	[8, 8]|	client.py|	隱藏層維度|
+|test_size|	0.2|	client.py|	測試集比例|
+|scaling|	"standard"|	client.py|	數值縮放方法|
+|encoding|	"onehot"|	client.py|	類別編碼方法|
 
 # 啟動流程
 設定視窗版的 Docker buildx
