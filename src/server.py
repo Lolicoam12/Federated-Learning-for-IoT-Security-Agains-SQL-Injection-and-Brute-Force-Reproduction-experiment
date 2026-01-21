@@ -89,7 +89,7 @@ def server_fn(context: Context) -> ServerAppComponents:
         min_available_clients=min_available,  # 集群內最少可用客戶端
         fit_metrics_aggregation_fn=weighted_avg_all,
         evaluate_metrics_aggregation_fn=weighted_avg_all,
-        on_fit_config_fn=fit_config,
+        on_fit_config_fn=fit_config, # 每輪訓練的 config
     )
 
     # ServerConfig：設定總共要跑幾輪
