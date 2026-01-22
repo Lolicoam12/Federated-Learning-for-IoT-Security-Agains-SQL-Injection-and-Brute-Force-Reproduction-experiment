@@ -22,7 +22,7 @@ clientapp = "src.client:app"
 #在這裡放預設的 run_config，會變成 context.run_config
 #  server_fn 裡的 run_cfg = context.run_config 就會拿到這些值
 [tool.flwr.app.config]
-num_rounds = 15  #聯邦學習輪數
+num_rounds = 10  #聯邦學習輪數
 num_clients = 2 #預期client數量
 min_available = 2   #最少可用client數量
 local_epochs = 10
