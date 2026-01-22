@@ -240,7 +240,8 @@ def load_and_split(csv_path: str, label_col: str = None):  # 讀取 CSV 並切�
             raise ValueError(f"指定的標籤欄 `{label}` 不在 CSV 欄位中。")
 
     # 要篩選的三種類別（小寫比對）
-    TARGETS = {"dictionarybruteforce", "sqlinjection", "benigntraffic"}  # 定義目標類別（小寫）
+    # TARGETS = {"dictionarybruteforce", "sqlinjection", "benigntraffic"}  # 定義目標類別（小寫）
+    TARGETS = {"sqlinjection", "benigntraffic"}  # 定義目標類別（小寫）
     df[label] = df[label].str.lower().str.replace(" ", "")  # 將標籤轉小寫並移除空格，以確保比對一致
 
     # 過濾只保留指定的類別
