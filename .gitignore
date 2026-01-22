@@ -7,3 +7,4 @@ __pycache__/
 /images/
 /.claude/
 /out/
+pyproject.toml
