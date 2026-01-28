@@ -52,8 +52,10 @@ CMD ["/bin/sh", "-c", "while sleep 1000; do :; done"]
 # kubectl get pods -owide
 #另外開一個終端機視窗
 # kubectl port-forward svc/service-server 9093:9093 9092:9092
-# flwr run . k8s-local --stream
+# flwr run . k8s-local
 #查看日誌
+#顯示flower-server的logs
+# kubectl logs -f deployment/flower-server
 #顯示flower-client的Pod名稱
 # kubectl get pods -l app=flower-client
 # kubectl logs -f pod/<flower-client-pod名稱>
