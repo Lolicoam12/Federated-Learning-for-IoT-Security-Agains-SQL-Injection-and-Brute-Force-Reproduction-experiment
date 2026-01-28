@@ -723,7 +723,13 @@ def client_fn(context: Context) -> fl.client.Client:
             )
 
             #  用 validation set 當作 fit metrics
-            val_loss, val_acc, val_f1 = test(net, valloader, is_binary)
+            # val_loss, val_acc, val_f1 = test(net, valloader, is_binary)
+            val_loss, val_acc, val_f1 = test(
+                net,
+                valloader,
+                is_binary,
+                debug=True   # 🔥 只在這裡打開
+            )
 
             return (
                 self.get_parameters({}),
