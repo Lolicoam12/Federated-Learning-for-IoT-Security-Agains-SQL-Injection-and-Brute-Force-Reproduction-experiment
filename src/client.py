@@ -141,7 +141,7 @@ def train(net, trainloader, valloader, epochs, class_weights, is_binary):
             , Val F1: {val_f1:.4f}")  # 印出驗證結果
 
 # 測試函數：評估模型在測試集上的表現
-def test(net, testloader, is_binary):
+def test(net, testloader, is_binary, debug=False):
     """Validate the model on the test set."""
     if is_binary:  # 二元分類損失
         criterion = nn.BCEWithLogitsLoss()
