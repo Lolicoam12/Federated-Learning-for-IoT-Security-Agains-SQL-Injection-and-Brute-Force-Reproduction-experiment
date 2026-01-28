@@ -168,14 +168,17 @@ def test(net, testloader, is_binary):
             all_labels.extend(labels_np)  # 收集標籤
     avg_loss = loss / total  # 平均損失
     acc = correct / total  # 準確率
-    
-    # [DEBUG] 預測分佈：看模型是不是全部猜 0（Benign）
-    unique, counts = np.unique(all_preds, return_counts=True)
-    print("[DEBUG] pred distribution:", dict(zip(unique, counts)))
+
     if is_binary:  # 二元 F1
         f1 = f1_score(all_labels, all_preds, average='binary')
     else:  # 多類 F1 (macro)
         f1 = f1_score(all_labels, all_preds, average='macro')
+
+    if debug:
+        # [DEBUG] 預測分佈：看模型是不是全部猜 0（Benign）
+        unique, counts = np.unique(all_preds, return_counts=True)
+        print("[DEBUG] pred distribution:", dict(zip(unique, counts)))
+    
     return avg_loss, acc, f1  # 返回損失、準確率、F1
 
 # 1 工具：欄名清理/標籤偵測
