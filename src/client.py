@@ -100,12 +100,21 @@ class Net(nn.Module):
 # 訓練函數：訓練模型並在每個 epoch 後驗證
 def train(net, trainloader, valloader, epochs, class_weights, is_binary):
     """Train the model on the training set with validation."""
-    if is_binary:  # 二元分類
+    # if is_binary:  # 二元分類
+    #     pos_weight = (
+    #         torch.tensor([class_weights[0] / class_weights[1]]).to(DEVICE)
+    #         if class_weights is not None 
+    #         else None)  # 計算正類權重
+    #     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)  # BCE 損失（帶 logits）
+    if is_binary:
+    # class_weights 來自 compute_class_weight，是「權重」
+    # 正確：pos_weight = weight_positive / weight_negative
         pos_weight = (
-            torch.tensor([class_weights[0] / class_weights[1]]).to(DEVICE)
-            if class_weights is not None 
-            else None)  # 計算正類權重
-        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)  # BCE 損失（帶 logits）
+            torch.tensor([class_weights[1] / class_weights[0]]).to(DEVICE)
+            if class_weights is not None
+            else None
+        )
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     else:  # 多類分類
         criterion = nn.CrossEntropyLoss(
             weight=class_weights.to(DEVICE) 
