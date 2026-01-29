@@ -57,6 +57,8 @@ CMD ["/bin/sh", "-c", "while sleep 1000; do :; done"]
 #查看日誌
 #顯示flower-server的logs
 # kubectl logs -f deployment/flower-server
+# 這樣做：只顯示重要資訊 (Round, Accuracy, Loss)，過濾掉 PullMessages
+# kubectl logs -f deployment/flower-server | Select-String -NotMatch "PullMessages"
 #顯示flower-client的Pod名稱
 # kubectl get pods -l app=flower-client
 # kubectl logs -f pod/<flower-client-pod名稱>
