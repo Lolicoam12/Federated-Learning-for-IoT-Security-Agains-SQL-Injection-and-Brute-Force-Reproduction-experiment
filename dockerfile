@@ -28,11 +28,12 @@ ENV PYTHONPATH="${PYTHONPATH}:/app/src"
 
 CMD ["/bin/sh", "-c", "while sleep 1000; do :; done"]
 
-#設定視窗版的 Docker buildx
-# minikube -p minikube docker-env --shell powershell | Invoke-Expression
+
 
 # docker run --rm --gpus all nvidia/cuda:12.3.1-base-ubuntu22.04 nvidia-smi
 # minikube start --driver=docker --gpus=all --memory=16384 --cpus=8 --addons=ingress
+#設定視窗版的 Docker buildx
+# minikube -p minikube docker-env --shell powershell | Invoke-Expression
 #啟用GPU Plugin(不確定下面程式是否剛需)
 # minikube addons enable nvidia-device-plugin
 #驗證Node GPU

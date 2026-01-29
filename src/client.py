@@ -595,16 +595,16 @@ def load_data_with_cache(datapath: str):
 
     # ===== DEBUG: label mapping & distribution =====
     print("[DEBUG] LabelEncoder classes_:", le.classes_)
-    # index 0 / 1 各自是誰
     for i, c in enumerate(le.classes_):
         print(f"[DEBUG] label index {i} -> class '{c}'")
 
-    # 看訓練資料中 0/1 的實際數量
-    import numpy as np
-    uniq, cnt = np.unique(y_train, return_counts=True)
-    print("[DEBUG] y_train distribution:", dict(zip(uniq, cnt)))
+    uniq, cnt = np.unique(y_train_idx, return_counts=True)
+    print(
+        "[DEBUG] y_train_idx distribution:",
+        dict(zip(uniq.tolist(), cnt.tolist()))
+    )
     # =============================================
-    
+
     pre, num_cols, cat_cols = fit_preprocessor(X_train)
     X_train_trans = transform_with_preprocessor(pre, X_train)
     X_val_trans   = transform_with_preprocessor(pre, X_val)
