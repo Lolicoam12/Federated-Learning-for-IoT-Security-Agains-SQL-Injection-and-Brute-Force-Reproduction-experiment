@@ -84,7 +84,7 @@ spec:
           #資源配置
           resources:
             limits:
-              memory: "2Gi"
+              memory: "4Gi"
               cpu: "2"
             requests:
               memory: "512Mi"

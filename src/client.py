@@ -594,15 +594,15 @@ def load_data_with_cache(datapath: str):
     ) = encode_labels(y_train_raw, y_val_raw, y_test_raw)
 
     # ===== DEBUG: label mapping & distribution =====
-    # print("[DEBUG] LabelEncoder classes_:", le.classes_)
-    # for i, c in enumerate(le.classes_):
-    #     print(f"[DEBUG] label index {i} -> class '{c}'")
+    print("[DEBUG] LabelEncoder classes_:", le.classes_)
+    for i, c in enumerate(le.classes_):
+        print(f"[DEBUG] label index {i} -> class '{c}'")
 
-    # uniq, cnt = np.unique(y_train_idx, return_counts=True)
-    # print(
-    #     "[DEBUG] y_train_idx distribution:",
-    #     dict(zip(uniq.tolist(), cnt.tolist()))
-    # )
+    uniq, cnt = np.unique(y_train_idx, return_counts=True)
+    print(
+        "[DEBUG] y_train_idx distribution:",
+        dict(zip(uniq.tolist(), cnt.tolist()))
+    )
     # =============================================
 
     pre, num_cols, cat_cols = fit_preprocessor(X_train)

@@ -46,6 +46,8 @@ CMD ["/bin/sh", "-c", "while sleep 1000; do :; done"]
 # kubectl delete pvc my-pvc
 # cd D:\DockerKubernetes\minikube_Use_FL\minikube_Use_FL_re\minikubeFlower
 # docker build -t kubeflower:latest .
+# 清理未知映像檔
+# docker image prune
 # kubectl apply -f descriptors/copier.yaml
 # kubectl apply -f descriptors/serverService.yaml
 # kubectl apply -f descriptors/serverDeploy.yaml
