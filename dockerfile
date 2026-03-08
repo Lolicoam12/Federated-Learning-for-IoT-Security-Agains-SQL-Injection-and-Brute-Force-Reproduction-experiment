@@ -22,7 +22,7 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt
 COPY ./src /app/src
 COPY ./Data/data.csv /app/data/data.csv
 
-ENV DATA_PATH=/app/data/data.csv
+ENV DATA_PATH=/app/data
 ENV CACHE_DIR=/app/cache
 ENV PYTHONPATH="${PYTHONPATH}:/app/src"
 
