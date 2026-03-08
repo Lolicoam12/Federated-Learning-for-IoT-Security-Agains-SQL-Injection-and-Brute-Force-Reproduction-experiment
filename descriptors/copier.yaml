@@ -60,6 +60,11 @@ metadata:
 spec:
   storageClassName: standard
   accessModes:
+    # ReadWriteOnce：PVC 只允許單一節點掛載為讀寫。
+    # Minikube 單節點環境下所有 Pod 共享同一節點，因此 5 個 client Pod 可正常存取。
+    # ⚠️  多節點叢集（如正式 K8s）請改用 ReadWriteMany（需要 NFS / CephFS 等 CSI）。
+    # Non-IID 升級路徑：可在 cache-warmer Init Container 加入 Dirichlet 分割，
+    #   以 seed=42+pod_index 讀取完整 CSV 後只 cache 自己那份，不需改動此 PVC 設定。
     - ReadWriteOnce
   resources:
     requests:
