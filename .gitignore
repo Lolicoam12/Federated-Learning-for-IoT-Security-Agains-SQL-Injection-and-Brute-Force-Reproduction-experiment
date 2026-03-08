@@ -1,6 +1,7 @@
 socket_vmnet/
 data/
 */data/
+Data/data.csv
 __pycache__/
 *.py[cod]
 *.tar
