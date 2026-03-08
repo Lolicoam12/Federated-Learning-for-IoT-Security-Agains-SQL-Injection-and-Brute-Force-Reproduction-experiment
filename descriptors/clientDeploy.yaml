@@ -23,14 +23,28 @@
 #         ports:
 #         - containerPort: 30051
 
+# Flower SuperNode headless Service（StatefulSet 必要）
+apiVersion: v1
+kind: Service
+metadata:
+  name: flower-client-headless
+spec:
+  clusterIP: None
+  selector:
+    app: flower-client
+
+---
+
 # Flower SuperNode with PVC
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: flower-client
   labels:
     app: flower-client
 spec:
+  serviceName: flower-client-headless   # 繫結 headless service，產生穩定 pod 名稱
+  podManagementPolicy: Parallel         # 所有 pod 同時啟動（同 Deployment 行為）
   replicas: 5
   selector:
     matchLabels:
@@ -45,7 +59,7 @@ spec:
           image: kubeflower:latest
           imagePullPolicy: IfNotPresent
           workingDir: /app
-          command: ["python", "-c"]
+          command: ["python3", "-c"]
           args:
             - |
               import sys
@@ -54,6 +68,13 @@ spec:
               import os
               load_data_with_cache(os.environ.get('DATA_PATH', '/app/data'))
               print('[cache-warmer] done')
+          resources:
+            limits:
+              memory: "6Gi"
+              cpu: "2"
+            requests:
+              memory: "2Gi"
+              cpu: "1"
           env:
             - name: DATA_PATH
               value: "/app/data"
