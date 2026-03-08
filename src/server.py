@@ -64,11 +64,13 @@ def server_fn(context: Context) -> ServerAppComponents:
     # 這幾個就是原本 argparse 的參數，現在從 run_config 讀，沒給就用預設值
     num_clients = int(run_cfg.get("num_clients", 2))
     min_available = int(run_cfg.get("min_available", 2))
+    min_fit = int(run_cfg.get("min_fit", min_available))
+    min_evaluate = int(run_cfg.get("min_evaluate", min_available))
     num_rounds = int(run_cfg.get("num_rounds", 5))
     local_epochs = int(run_cfg.get("local_epochs", run_cfg.get("epochs", 1)))
     print(
         f"[server_fn] num_clients={num_clients}, "
-        f"min_available={min_available}, num_rounds={num_rounds}"
+        f"min_available={min_available}, min_fit={min_fit}, min_evaluate={min_evaluate}, num_rounds={num_rounds}"
         f"local_epochs={local_epochs}"
     )
 
@@ -83,13 +85,13 @@ def server_fn(context: Context) -> ServerAppComponents:
     # FedAvg 策略（沿用原本 server.py 的設定）
     strategy = fl.server.strategy.FedAvg(
         fraction_fit=1.0,                  # 每輪抽樣比例（這裡全抽）
-        fraction_evaluate=1.0,             # 評估抽樣
-        min_fit_clients=num_clients,       # 每輪最少參與訓練的客戶端
-        min_evaluate_clients=num_clients,  # 每輪最少參與評估的客戶端
+        fraction_evaluate=0.0,             # 停用 evaluate 階段，避免 SuperLink race condition
+        min_fit_clients=min_fit,           # 每輪最少參與訓練的客戶端
+        min_evaluate_clients=0,            # evaluate 已停用
         min_available_clients=min_available,  # 集群內最少可用客戶端
         fit_metrics_aggregation_fn=weighted_avg_all,
         evaluate_metrics_aggregation_fn=weighted_avg_all,
-        on_fit_config_fn=fit_config, # 每輪訓練的 config
+        on_fit_config_fn=fit_config,       # 每輪訓練的 config
     )
 
     # ServerConfig：設定總共要跑幾輪

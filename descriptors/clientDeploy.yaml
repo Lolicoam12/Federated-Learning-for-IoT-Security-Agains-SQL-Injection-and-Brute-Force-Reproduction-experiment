@@ -31,7 +31,7 @@ metadata:
   labels:
     app: flower-client
 spec:
-  replicas: 2
+  replicas: 5
   selector:
     matchLabels:
       app: flower-client
@@ -40,6 +40,32 @@ spec:
       labels:
         app: flower-client
     spec:
+      initContainers:
+        - name: cache-warmer
+          image: kubeflower:latest
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command: ["python", "-c"]
+          args:
+            - |
+              import sys
+              sys.path.insert(0, '/app')
+              from src.client import load_data_with_cache
+              import os
+              load_data_with_cache(os.environ.get('DATA_PATH', '/app/data'))
+              print('[cache-warmer] done')
+          env:
+            - name: DATA_PATH
+              value: "/app/data"
+            - name: CACHE_DIR
+              value: "/app/cache"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: flower-cache
+              mountPath: /app/cache
       containers:
         - name: kubeflower
           image: kubeflower:latest
