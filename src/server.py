@@ -84,7 +84,7 @@ def server_fn(context: Context) -> ServerAppComponents:
     
     # FedAvg 策略（沿用原本 server.py 的設定）
     strategy = fl.server.strategy.FedAvg(
-        fraction_fit=1.0,                  # 每輪抽樣比例（這裡全抽）
+        fraction_fit=min_fit / num_clients,  # 每輪抽樣比例（由 min_fit/num_clients 控制）
         fraction_evaluate=0.0,             # 停用 evaluate 階段，避免 SuperLink race condition
         min_fit_clients=min_fit,           # 每輪最少參與訓練的客戶端
         min_evaluate_clients=0,            # evaluate 已停用
