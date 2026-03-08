@@ -44,6 +44,10 @@ def _file_sha256(path: str) -> str:
             h.update(chunk)
     return h.hexdigest()
 
+# ⚠️  已廢棄（DEPRECATED）：此函數不應直接呼叫。
+# 它依賴尚未初始化的全域變數（scaling、encoding、drop_empty_rows），
+# 獨立呼叫會觸發 NameError。主流程已不使用此函數；
+# DataCache 內部有等效且正確的 meta 機制。
 def _current_cache_meta(csv_path: str) -> dict:
     return {
         "csv_sha256": _file_sha256(csv_path),
