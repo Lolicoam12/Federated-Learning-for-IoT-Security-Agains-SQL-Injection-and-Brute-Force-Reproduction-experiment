@@ -647,9 +647,9 @@ def load_data_with_cache(datapath: str, num_clients: int = 1):
 
         _clog("RETURN", mode="HIT", train_n=len(trainset), val_n=len(valset), test_n=len(testset))
         return (
-            DataLoader(trainset, batch_size=256, shuffle=True),
-            DataLoader(valset, batch_size=256, shuffle=False),
-            DataLoader(testset, batch_size=256, shuffle=False),
+            DataLoader(trainset, batch_size=512, shuffle=True),
+            DataLoader(valset, batch_size=512, shuffle=False),
+            DataLoader(testset, batch_size=512, shuffle=False),
             input_dim,
             n_classes,
             is_binary,
@@ -747,9 +747,9 @@ def load_data_with_cache(datapath: str, num_clients: int = 1):
 
     _clog("RETURN", mode="MISS->REBUILD", train_n=len(trainset), val_n=len(valset), test_n=len(testset))
     return (
-        DataLoader(trainset, batch_size=256, shuffle=True),
-        DataLoader(valset, batch_size=256, shuffle=False),
-        DataLoader(testset, batch_size=256, shuffle=False),
+        DataLoader(trainset, batch_size=512, shuffle=True),
+        DataLoader(valset, batch_size=512, shuffle=False),
+        DataLoader(testset, batch_size=512, shuffle=False),
         input_dim,
         n_classes,
         is_binary,
