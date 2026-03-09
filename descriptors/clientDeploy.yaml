@@ -98,7 +98,6 @@ spec:
           args:
             - "--insecure"
             - "--superlink=service-server:9092"
-            - "--max-message-size=536870912"   # 允許最大 512 MiB 訊息，避免大模型傳輸超時
           # GPU 資源需求
           resources:
             limits:
