@@ -170,13 +170,6 @@ def train(
 
             loss.backward()  # 反向傳播
             optimizer.step()  # 更新參數
-        # 僅在最後一個 epoch 後執行驗證，避免每輪重複評估拖慢訓練
-        if epoch == epochs - 1:
-            val_loss, val_acc, val_f1 = test(net, valloader, is_binary)  # 計算驗證指標
-            print(
-                f"Epoch {epoch+1}/{epochs} "
-                f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}"
-                f", Val F1: {val_f1:.4f}")  # 印出最終驗證結果
 
 # 測試函數：評估模型在測試集上的表現
 def test(net, testloader, is_binary, debug=False):
