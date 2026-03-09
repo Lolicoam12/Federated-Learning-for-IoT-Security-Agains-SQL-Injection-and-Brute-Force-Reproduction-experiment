@@ -76,19 +76,21 @@ _DATA_CACHE_PATH = None     # str
 warnings.filterwarnings("ignore", category=UserWarning)  # 忽略使用者警告
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")  # 設定裝置為 GPU（如果可用）否則 CPU
 
-# 模型定義：淺層 MLP，用於 IDS 表格特徵
+# 模型定義：帶 BatchNorm + Dropout 的 MLP，用於 IDS 表格特徵
 class Net(nn.Module):
-    """Shallow MLP for IDS tabular features"""
+    """MLP with BatchNorm and Dropout for IDS tabular features"""
 
-    def __init__(self, input_dim=110, hidden=[8, 8], n_classes=1):
+    def __init__(self, input_dim=110, hidden=[128, 64, 32], n_classes=1, dropout: float = 0.3):
         super(Net, self).__init__()  # 呼叫父類初始化
         layers = []  # 層列表
         prev = input_dim  # 前一層輸出維度初始化為輸入維度
 
-        # fc0 + fc1：隱藏層
+        # 隱藏層：Linear → BatchNorm1d → ReLU → Dropout
         for h in hidden:  # 依隱藏層大小迴圈
-            layers.append(nn.Linear(prev, h))  # 添加全連接層
-            layers.append(nn.ReLU())  # 添加 ReLU 激活
+            layers.append(nn.Linear(prev, h))       # 全連接層
+            layers.append(nn.BatchNorm1d(h))        # 批次正規化，穩定訓練並加速收斂
+            layers.append(nn.ReLU())                # ReLU 激活
+            layers.append(nn.Dropout(p=dropout))    # Dropout 防止過擬合
             prev = h  # 更新前一層輸出維度
 
         # 輸出層
@@ -754,7 +756,8 @@ def client_fn(context: Context) -> fl.client.Client:
     ) = _DATA_CACHE
 
     # 初始化模型（每次 client_fn 都重建模型是可以；重點是資料不要重讀）
-    net = Net(input_dim=input_dim, hidden=[8, 8], n_classes=n_classes).to(DEVICE)
+    # hidden 層擴大為 [128, 64, 32]，搭配 BatchNorm + Dropout 提升表達能力與泛化性
+    net = Net(input_dim=input_dim, hidden=[128, 64, 32], n_classes=n_classes).to(DEVICE)
 
     class FlowerClient(fl.client.NumPyClient):
         def get_parameters(self, config):
