@@ -76,8 +76,9 @@ spec:
           image: kubeflower:latest
           imagePullPolicy: IfNotPresent
           workingDir: /app
-          command: ["flower-superlink"]
+          command: ["python3"]
           args:
+            - "/app/src/superlink_wrapper.py"
             - "--insecure"
             - "--fleet-api-address=0.0.0.0:9092"
             - "--control-api-address=0.0.0.0:9093"

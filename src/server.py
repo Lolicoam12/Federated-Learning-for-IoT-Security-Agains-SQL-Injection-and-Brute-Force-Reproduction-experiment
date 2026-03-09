@@ -8,22 +8,6 @@ from flwr.serverapp import ServerApp
 from collections.abc import Mapping
 import numpy as np
 
-# === Flower 1.25.0 Bug Workaround ===
-# pull_object 在 object content=b"" 時（preregister 後 put 前）
-# 呼叫 store_traffic(bytes_sent=0, bytes_recv=0)，觸發 ValueError。
-# 靜默跳過此邊界情況，不影響任何聚合邏輯。
-from flwr.server.superlink.linkstate.in_memory_linkstate import InMemoryLinkState as _IML
-
-_orig_store_traffic = _IML.store_traffic
-
-def _patched_store_traffic(self, run_id, *, bytes_sent, bytes_recv):
-    if bytes_sent == 0 and bytes_recv == 0:
-        return  # preregister-to-put 視窗的邊界情況，靜默跳過
-    _orig_store_traffic(self, run_id, bytes_sent=bytes_sent, bytes_recv=bytes_recv)
-
-_IML.store_traffic = _patched_store_traffic
-# === End Workaround ===
-
 # return averaged
 def weighted_avg_all(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     """
