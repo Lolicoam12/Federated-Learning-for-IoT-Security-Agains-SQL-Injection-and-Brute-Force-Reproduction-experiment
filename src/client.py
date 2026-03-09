@@ -842,9 +842,6 @@ def client_fn(context: Context) -> fl.client.Client:
             proximal_mu = float(config.get("proximal_mu", 0.0))
             current_round = int(config.get("current_round", 0))
 
-            # test 評估移交 evaluate() 負責；fit() 不執行以避免超時
-            test_loss, test_acc, test_f1 = 0.0, 0.0, 0.0
-
             # set_parameters() 已將全局參數載入 net，
             # 此時從 net.parameters() 擷取 tensor，確保只含可學習參數
             # （排除 BatchNorm 的 running_mean / running_var / num_batches_tracked buffers）
@@ -881,9 +878,7 @@ def client_fn(context: Context) -> fl.client.Client:
                     "val_loss":      float(val_loss),
                     "val_accuracy":  float(val_acc),
                     "val_f1":        float(val_f1),
-                    "test_loss":     float(test_loss),
-                    "test_accuracy": float(test_acc),
-                    "test_f1":       float(test_f1),
+                    # test_* 由 evaluate() 負責（History distributed evaluate 區段）
                 },
             )
 
