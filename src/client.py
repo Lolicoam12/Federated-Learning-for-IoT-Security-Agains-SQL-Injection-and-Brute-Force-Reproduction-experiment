@@ -187,7 +187,7 @@ def test(net, testloader, is_binary, debug=False):
             outputs = net(inputs)  # 前向計算
             if is_binary:  # 二元處理
                 batch_loss = criterion(outputs, labels.float()).item()  # 批次損失
-                pred = (torch.sigmoid(outputs) > 0.5).float().cpu().numpy()  # 預測（>0.5）
+                pred = (torch.sigmoid(outputs) > 0.3).float().cpu().numpy()  # 降低閾值提升 Recall（入侵偵測漏報代價高）
                 labels_np = labels.cpu().numpy()  # 標籤轉 numpy
             else:  # 多類處理
                 batch_loss = criterion(outputs, labels).item()  # 批次損失
