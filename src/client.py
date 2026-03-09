@@ -113,6 +113,7 @@ def train(
     is_binary,
     proximal_mu: float = 0.0,
     global_params=None,
+    current_round: int = 0,
 ):
     """
     Train the model on the training set with optional FedProx proximal term.
@@ -150,8 +151,10 @@ def train(
         global_tensors = [p.to(DEVICE) for p in global_params]
 
     for epoch in range(epochs):  # 每個 epoch 迴圈
+        t0 = time.time()
+        epoch_loss = 0.0
         net.train()  # 設定模型為訓練模式
-        for inputs, labels in tqdm(trainloader):  # 遍歷訓練資料
+        for inputs, labels in tqdm(trainloader, disable=True):  # 遍歷訓練資料（K8s 非 TTY 禁用進度條）
             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)  # 移到裝置
             optimizer.zero_grad()  # 清零梯度
             outputs = net(inputs)  # 前向計算
@@ -170,6 +173,9 @@ def train(
 
             loss.backward()  # 反向傳播
             optimizer.step()  # 更新參數
+            epoch_loss += loss.item()
+        print(f"[TRAIN] round={current_round} epoch={epoch+1}/{epochs} "
+              f"loss={epoch_loss/len(trainloader):.4f} elapsed={time.time()-t0:.1f}s")
 
 # 測試函數：評估模型在測試集上的表現
 def test(net, testloader, is_binary, debug=False):
@@ -837,6 +843,7 @@ def client_fn(context: Context) -> fl.client.Client:
                 is_binary=is_binary,
                 proximal_mu=proximal_mu,          # FedProx 近端項係數
                 global_params=global_param_tensors,  # 僅含可學習參數的 tensor list
+                current_round=current_round,      # 傳入圈數供 epoch 計時日誌使用
             )
 
             # 本地訓練後，對本地模型評估 val set（訓練監控用）
