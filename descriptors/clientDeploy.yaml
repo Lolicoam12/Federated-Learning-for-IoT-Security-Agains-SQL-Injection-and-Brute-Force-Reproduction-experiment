@@ -66,7 +66,10 @@ spec:
               sys.path.insert(0, '/app')
               from src.client import load_data_with_cache
               import os
-              load_data_with_cache(os.environ.get('DATA_PATH', '/app/data'))
+              load_data_with_cache(
+                  os.environ.get('DATA_PATH', '/app/data'),
+                  num_clients=int(os.environ.get('NUM_CLIENTS', '1'))
+              )
               print('[cache-warmer] done')
           resources:
             limits:
