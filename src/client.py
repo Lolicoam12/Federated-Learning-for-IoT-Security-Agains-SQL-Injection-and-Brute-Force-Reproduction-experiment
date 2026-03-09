@@ -143,13 +143,11 @@ def train(
             else None)  # 交叉熵損失
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)  # Adam 最佳化器
 
-    # 若啟用 FedProx，將全局參數固定於 CPU tensor list，用於近端項計算
+    # 若啟用 FedProx，將全局參數移至 DEVICE，用於近端項計算
+    # global_params 已由 fit() 傳入 tensor list（僅含可學習參數，對應 net.parameters()）
     global_tensors = None
     if proximal_mu > 0.0 and global_params is not None:
-        global_tensors = [
-            torch.tensor(p, dtype=torch.float32, device=DEVICE)
-            for p in global_params
-        ]
+        global_tensors = [p.to(DEVICE) for p in global_params]
 
     for epoch in range(epochs):  # 每個 epoch 迴圈
         net.train()  # 設定模型為訓練模式
@@ -813,6 +811,15 @@ def client_fn(context: Context) -> fl.client.Client:
             # 語義等同於原 evaluate()，保留「全局模型 test 表現」的意義
             test_loss, test_acc, test_f1 = test(net, testloader, is_binary)
 
+            # set_parameters() 已將全局參數載入 net，
+            # 此時從 net.parameters() 擷取 tensor，確保只含可學習參數
+            # （排除 BatchNorm 的 running_mean / running_var / num_batches_tracked buffers）
+            # 若直接傳入 numpy arrays（來自 state_dict），buffer 會混入導致 zip 錯位崩潰
+            global_param_tensors = (
+                [p.detach().clone() for p in net.parameters()]
+                if proximal_mu > 0.0 else None
+            )
+
             train(
                 net,
                 trainloader,
@@ -820,8 +827,8 @@ def client_fn(context: Context) -> fl.client.Client:
                 epochs=local_epochs,
                 class_weights=class_weights,
                 is_binary=is_binary,
-                proximal_mu=proximal_mu,   # FedProx 近端項係數
-                global_params=parameters,  # 全局模型參數，用於計算近端項
+                proximal_mu=proximal_mu,          # FedProx 近端項係數
+                global_params=global_param_tensors,  # 僅含可學習參數的 tensor list
             )
 
             # 本地訓練後，對本地模型評估 val set（訓練監控用）
