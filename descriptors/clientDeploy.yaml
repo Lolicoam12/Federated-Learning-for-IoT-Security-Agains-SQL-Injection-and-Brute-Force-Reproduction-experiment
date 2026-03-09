@@ -119,6 +119,12 @@ spec:
                   fieldPath: metadata.name
             - name: FLWR_GRPC_MAX_TIMEOUT
               value: "3600"  # gRPC 連線逾時（秒），避免長輪訓練斷線
+            - name: FLWR_GRPC_KEEPALIVE_TIME_MS
+              value: "30000"  # 每 30 秒發一次 keepalive ping，維持連線活躍
+            - name: FLWR_GRPC_KEEPALIVE_TIMEOUT_MS
+              value: "10000"  # ping timeout 10 秒
+            - name: FLWR_GRPC_MAX_RECONNECT_BACKOFF_MS
+              value: "5000"   # 斷線重連最大 backoff 5 秒
             - name: NUM_CLIENTS
               value: "5"  # 與 pyproject.toml num_clients 同步，用於 IID partition 分割
           volumeMounts:

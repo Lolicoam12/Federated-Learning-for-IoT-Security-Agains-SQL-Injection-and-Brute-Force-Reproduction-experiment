@@ -9,3 +9,4 @@ __pycache__/
 /.claude/
 /out/
 pyproject.toml
+/ExperimentalData/

@@ -343,6 +343,21 @@ def load_and_split(
             f"-> train_n={len(X_train)} (全量={n})"
         )
 
+        # Val 集同樣切片，使本地 val 分布與 train partition 一致
+        n_val = len(X_val)
+        rng_val = np.random.default_rng(seed=99 + partition_id)  # 不同 seed 避免與 train 相關
+        val_indices = rng_val.permutation(n_val)
+        val_chunk = n_val // num_partitions
+        val_start = partition_id * val_chunk
+        val_end = val_start + val_chunk if partition_id < num_partitions - 1 else n_val
+        val_selected = val_indices[val_start:val_end]
+        X_val = X_val.iloc[val_selected].reset_index(drop=True)
+        y_val_raw = y_val_raw.iloc[val_selected].reset_index(drop=True)
+        print(
+            f"[load_and_split] IID partition {partition_id}/{num_partitions} "
+            f"-> val_n={len(X_val)} (全量={n_val})"
+        )
+
     return X_train, X_val, X_test, y_train_raw, y_val_raw, y_test_raw, label  # 返回切分結果
 
 #  標籤編碼（二元 / 多類）
