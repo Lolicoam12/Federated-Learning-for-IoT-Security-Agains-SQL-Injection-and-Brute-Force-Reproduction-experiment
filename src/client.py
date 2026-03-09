@@ -814,10 +814,10 @@ def client_fn(context: Context) -> fl.client.Client:
             local_epochs = int(config.get("local_epochs", 1))
             # 讀取 FedProx 近端項係數（預設 0.0 代表不啟用近端項，行為等同 FedAvg）
             proximal_mu = float(config.get("proximal_mu", 0.0))
+            current_round = int(config.get("current_round", 0))
 
-            # 在本地訓練前，先對全局模型評估 test set
-            # 語義等同於原 evaluate()，保留「全局模型 test 表現」的意義
-            test_loss, test_acc, test_f1 = test(net, testloader, is_binary)
+            # test 評估移交 evaluate() 負責；fit() 不執行以避免超時
+            test_loss, test_acc, test_f1 = 0.0, 0.0, 0.0
 
             # set_parameters() 已將全局參數載入 net，
             # 此時從 net.parameters() 擷取 tensor，確保只含可學習參數
@@ -844,7 +844,7 @@ def client_fn(context: Context) -> fl.client.Client:
                 net,
                 valloader,
                 is_binary,
-                debug=True
+                debug=(current_round % 5 == 0)  # 每 5 輪印一次 pred 分布，降低日誌噪音
             )
 
             return (
