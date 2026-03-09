@@ -150,6 +150,7 @@ def train(net, trainloader, valloader, epochs, class_weights, is_binary):
 # 測試函數：評估模型在測試集上的表現
 def test(net, testloader, is_binary, debug=False):
     """Validate the model on the test set."""
+    net.eval()  # 切換為評估模式：停用 BatchNorm 的 running stats 更新與 Dropout
     if is_binary:  # 二元分類損失
         criterion = nn.BCEWithLogitsLoss()
     else:  # 多類分類損失
