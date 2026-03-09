@@ -99,7 +99,7 @@ def server_fn(context: Context) -> ServerAppComponents:
     )
 
     # ServerConfig：設定總共要跑幾輪
-    config = ServerConfig(num_rounds=num_rounds)
+    config = ServerConfig(num_rounds=num_rounds, round_timeout=1800.0)
 
     return ServerAppComponents(config=config, strategy=strategy)
 
