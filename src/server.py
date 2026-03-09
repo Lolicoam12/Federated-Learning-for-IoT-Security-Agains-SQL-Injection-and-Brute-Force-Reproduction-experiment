@@ -74,16 +74,20 @@ def server_fn(context: Context) -> ServerAppComponents:
         f"local_epochs={local_epochs}"
     )
 
+    proximal_mu = float(run_cfg.get("proximal_mu", 0.1))
+
     # 每輪訓練的 config
     def fit_config(server_round: int):
         return {
             "local_epochs": local_epochs,
             "epochs": local_epochs,          # 兼容另一種 key
             "current_round": server_round,
+            "proximal_mu": proximal_mu,      # FedProx 近端項係數，傳給 client 的 train()
         }
-    
-    # FedAvg 策略（沿用原本 server.py 的設定）
-    strategy = fl.server.strategy.FedAvg(
+
+    # FedProx 策略：在 FedAvg 基礎上加入近端項約束，改善 non-IID 收斂穩定性
+    strategy = fl.server.strategy.FedProx(
+        proximal_mu=proximal_mu,           # 近端項係數，控制本地模型偏離全局模型的幅度
         fraction_fit=min_fit / num_clients,  # 每輪抽樣比例（由 min_fit/num_clients 控制）
         fraction_evaluate=0.0,             # 停用 evaluate 階段，避免 SuperLink race condition
         min_fit_clients=min_fit,           # 每輪最少參與訓練的客戶端

@@ -103,13 +103,28 @@ class Net(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # 前向傳播
         return self.net(x)  # 通過模型計算輸出
 
-# 訓練函數：訓練模型並在每個 epoch 後驗證
-def train(net, trainloader, valloader, epochs, class_weights, is_binary):
-    """Train the model on the training set with validation."""
+# 訓練函數：訓練模型並在最後一個 epoch 後驗證
+def train(
+    net,
+    trainloader,
+    valloader,
+    epochs,
+    class_weights,
+    is_binary,
+    proximal_mu: float = 0.0,
+    global_params=None,
+):
+    """
+    Train the model on the training set with optional FedProx proximal term.
+
+    若 proximal_mu > 0 且 global_params 不為 None，則在每個 batch 的 task loss 後
+    加入近端項：(proximal_mu / 2) * ||w - w_global||^2，
+    限制本地模型不要偏離全局模型太遠，改善 non-IID 下的收斂穩定性。
+    """
     # if is_binary:  # 二元分類
     #     pos_weight = (
     #         torch.tensor([class_weights[0] / class_weights[1]]).to(DEVICE)
-    #         if class_weights is not None 
+    #         if class_weights is not None
     #         else None)  # 計算正類權重
     #     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)  # BCE 損失（帶 logits）
     if is_binary:
@@ -123,10 +138,19 @@ def train(net, trainloader, valloader, epochs, class_weights, is_binary):
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     else:  # 多類分類
         criterion = nn.CrossEntropyLoss(
-            weight=class_weights.to(DEVICE) 
-            if class_weights is not None 
+            weight=class_weights.to(DEVICE)
+            if class_weights is not None
             else None)  # 交叉熵損失
     optimizer = torch.optim.Adam(net.parameters(), lr=0.001)  # Adam 最佳化器
+
+    # 若啟用 FedProx，將全局參數固定於 CPU tensor list，用於近端項計算
+    global_tensors = None
+    if proximal_mu > 0.0 and global_params is not None:
+        global_tensors = [
+            torch.tensor(p, dtype=torch.float32, device=DEVICE)
+            for p in global_params
+        ]
+
     for epoch in range(epochs):  # 每個 epoch 迴圈
         net.train()  # 設定模型為訓練模式
         for inputs, labels in tqdm(trainloader):  # 遍歷訓練資料
@@ -137,6 +161,15 @@ def train(net, trainloader, valloader, epochs, class_weights, is_binary):
                 loss = criterion(outputs, labels.float())
             else:  # 多類損失計算
                 loss = criterion(outputs, labels)
+
+            # FedProx 近端項：(proximal_mu / 2) * ||w - w_global||^2
+            if global_tensors is not None:
+                proximal_term = sum(
+                    torch.sum((w - w_g) ** 2)
+                    for w, w_g in zip(net.parameters(), global_tensors)
+                )
+                loss = loss + (proximal_mu / 2.0) * proximal_term
+
             loss.backward()  # 反向傳播
             optimizer.step()  # 更新參數
         # 僅在最後一個 epoch 後執行驗證，避免每輪重複評估拖慢訓練
@@ -773,6 +806,8 @@ def client_fn(context: Context) -> fl.client.Client:
             self.set_parameters(parameters)
             # 圈數設定epochs(輪)
             local_epochs = int(config.get("local_epochs", 1))
+            # 讀取 FedProx 近端項係數（預設 0.0 代表不啟用近端項，行為等同 FedAvg）
+            proximal_mu = float(config.get("proximal_mu", 0.0))
 
             # 在本地訓練前，先對全局模型評估 test set
             # 語義等同於原 evaluate()，保留「全局模型 test 表現」的意義
@@ -785,6 +820,8 @@ def client_fn(context: Context) -> fl.client.Client:
                 epochs=local_epochs,
                 class_weights=class_weights,
                 is_binary=is_binary,
+                proximal_mu=proximal_mu,   # FedProx 近端項係數
+                global_params=parameters,  # 全局模型參數，用於計算近端項
             )
 
             # 本地訓練後，對本地模型評估 val set（訓練監控用）
